@@ -91,6 +91,7 @@ defmodule RoomlyWeb.UserLive.Settings do
     socket =
       socket
       |> assign(:current_email, user.email)
+      |> assign(:page_title, "#{user.username}")
       |> assign(:email_form, to_form(email_changeset))
       |> assign(:password_form, to_form(password_changeset))
       |> assign(:trigger_submit, false)
