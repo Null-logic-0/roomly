@@ -7,6 +7,19 @@
 # General application configuration
 import Config
 
+config :roomly, :scopes,
+  user: [
+    default: true,
+    module: Roomly.Accounts.Scope,
+    assign_key: :current_scope,
+    access_path: [:user, :id],
+    schema_key: :user_id,
+    schema_type: :id,
+    schema_table: :users,
+    test_data_fixture: Roomly.AccountsFixtures,
+    test_setup_helper: :register_and_log_in_user
+  ]
+
 config :roomly,
   ecto_repos: [Roomly.Repo],
   generators: [timestamp_type: :utc_datetime]
