@@ -16,16 +16,26 @@ defmodule RoomlyWeb.UserLive.Settings do
         </.header>
       </div>
 
-      <.form for={@email_form} id="email_form" phx-submit="update_email" phx-change="validate_email">
+      <.form
+        for={@user_form}
+        id="username_form"
+        phx-submit="update_username"
+        phx-change="validate_username"
+      >
         <.input
-          field={@email_form[:email]}
-          type="email"
-          label="Email"
+          field={@user_form[:username]}
+          label="Username"
           autocomplete="username"
           spellcheck="false"
           required
         />
-        <.button variant="primary" phx-disable-with="Changing...">Change Email</.button>
+        <.input
+          field={@user_form[:email]}
+          type="email"
+          label="Email"
+          disabled={true}
+        />
+        <.button variant="primary" phx-disable-with="Saving...">Save</.button>
       </.form>
 
       <div class="divider" />
@@ -70,29 +80,16 @@ defmodule RoomlyWeb.UserLive.Settings do
   end
 
   @impl true
-  def mount(%{"token" => token}, _session, socket) do
-    socket =
-      case Accounts.update_user_email(socket.assigns.current_scope.user, token) do
-        {:ok, _user} ->
-          put_flash(socket, :info, "Email changed successfully.")
-
-        {:error, _} ->
-          put_flash(socket, :error, "Email change link is invalid or it has expired.")
-      end
-
-    {:ok, push_navigate(socket, to: ~p"/users/settings")}
-  end
-
   def mount(_params, _session, socket) do
     user = socket.assigns.current_scope.user
-    email_changeset = Accounts.change_user_email(user, %{}, validate_unique: false)
+    username_changeset = Accounts.change_user_username(user, %{}, validate_unique: false)
     password_changeset = Accounts.change_user_password(user, %{}, hash_password: false)
 
     socket =
       socket
       |> assign(:current_email, user.email)
       |> assign(:page_title, "#{user.username}")
-      |> assign(:email_form, to_form(email_changeset))
+      |> assign(:user_form, to_form(username_changeset))
       |> assign(:password_form, to_form(password_changeset))
       |> assign(:trigger_submit, false)
 
@@ -100,36 +97,39 @@ defmodule RoomlyWeb.UserLive.Settings do
   end
 
   @impl true
-  def handle_event("validate_email", params, socket) do
-    %{"user" => user_params} = params
-
-    email_form =
+  def handle_event("validate_username", %{"user" => user_params}, socket) do
+    user_form =
       socket.assigns.current_scope.user
-      |> Accounts.change_user_email(user_params, validate_unique: false)
+      |> Accounts.change_user_username(user_params, validate_unique: false)
       |> Map.put(:action, :validate)
       |> to_form()
 
-    {:noreply, assign(socket, email_form: email_form)}
+    {:noreply, assign(socket, user_form: user_form)}
   end
 
-  def handle_event("update_email", params, socket) do
-    %{"user" => user_params} = params
+  def handle_event("update_username", %{"user" => user_params}, socket) do
     user = socket.assigns.current_scope.user
     true = Accounts.sudo_mode?(user)
 
-    case Accounts.change_user_email(user, user_params) do
-      %{valid?: true} = changeset ->
-        Accounts.deliver_user_update_email_instructions(
-          Ecto.Changeset.apply_action!(changeset, :insert),
-          user.email,
-          &url(~p"/users/settings/confirm-email/#{&1}")
-        )
+    case Accounts.update_user_username(user, user_params) do
+      {:ok, updated_user} ->
+        socket =
+          socket
+          |> assign(
+            current_scope: %{socket.assigns.current_scope | user: updated_user},
+            user_form: to_form(Accounts.change_user_username(updated_user, %{}))
+          )
+          |> put_flash(:info, "Username updated successfully.")
 
-        info = "A link to confirm your email change has been sent to the new address."
-        {:noreply, socket |> put_flash(:info, info)}
+        {:noreply, socket}
 
-      changeset ->
-        {:noreply, assign(socket, :email_form, to_form(changeset, action: :insert))}
+      {:error, changeset} ->
+        socket =
+          socket
+          |> assign(user_form: to_form(changeset))
+          |> put_flash(:error, "Username update failed.")
+
+        {:noreply, socket}
     end
   end
 

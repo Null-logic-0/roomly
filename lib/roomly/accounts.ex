@@ -113,6 +113,13 @@ defmodule Roomly.Accounts do
   end
 
   @doc """
+  Returns an `%Ecto.Changeset{}` for changing the user username.
+  """
+  def change_user_username(user, attrs \\ %{}, opts \\ []) do
+    User.username_changeset(user, attrs, opts)
+  end
+
+  @doc """
   Updates the user email using the given token.
 
   If the token matches, the user email is updated and the token is deleted.
@@ -131,6 +138,16 @@ defmodule Roomly.Accounts do
         _ -> {:error, :transaction_aborted}
       end
     end)
+  end
+
+  @doc """
+    Update the user username
+  """
+
+  def update_user_username(user, attrs \\ %{}, opts \\ []) do
+    user
+    |> User.username_changeset(attrs, opts)
+    |> Repo.update()
   end
 
   @doc """
