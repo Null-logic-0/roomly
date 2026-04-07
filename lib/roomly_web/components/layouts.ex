@@ -36,16 +36,15 @@ defmodule RoomlyWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <header class="navbar px-4 sm:px-6 lg:px-8">
-      <div class="flex-1">
-        <a href="/" class=" flex  items-center gap-2">
-          <span class="bg-primary rounded-lg p-2 text-white w-10 h-10 flex items-center justify-center">
-            <.icon name="hero-video-camera-solid" class="size-6" />
-          </span>
-          <h1 class="text-3xl text-primary font-semibold">Roomly</h1>
-        </a>
-      </div>
-      <div class="flex-none">
+    <header class="navbar flex justify-between items-center px-4 sm:px-6 lg:px-8">
+      <a href="/" class="flex items-center gap-2">
+        <span class="bg-primary rounded-lg p-2 text-white w-10 h-10 flex items-center justify-center">
+          <.icon name="hero-video-camera-solid" class="size-6" />
+        </span>
+        <h1 class="text-3xl text-primary font-semibold">Roomly</h1>
+      </a>
+
+      <div>
         <.nav_menu current_scope={@current_scope} />
       </div>
     </header>

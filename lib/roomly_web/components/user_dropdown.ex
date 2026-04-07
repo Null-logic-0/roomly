@@ -4,13 +4,22 @@ defmodule RoomlyWeb.UserDropdown do
   @doc """
   User dropdown menu with Settings and Log out links.
   """
+  attr :current_scope, :any, required: true
   slot :inner_block, required: true
 
   def user_dropdown(assigns) do
     ~H"""
     <div class="dropdown dropdown-end ">
-      <div tabindex="0" role="button" class="btn btn-ghost">
-        <.icon name="hero-user-circle" class="size-6 opacity-75 hover:opacity-100" />
+      <div tabindex="0" role="button" class="cursor-pointer">
+        <%= if @current_scope && @current_scope.user && @current_scope.user.profile_image do %>
+          <img
+            src={@current_scope.user.profile_image}
+            alt="Profile Image"
+            class="w-10 h-10 rounded-full mx-auto object-cover"
+          />
+        <% else %>
+          <.icon name="hero-user-circle" class="size-8 opacity-75 hover:opacity-100" />
+        <% end %>
       </div>
       <ul
         tabindex="-1"

@@ -5,7 +5,7 @@ defmodule Roomly.Accounts.User do
   schema "users" do
     field :email, :string
     field :username, :string
-    field :profile_image, :string, default: "/images/default-profile.svg"
+    field :profile_image, :string, default: "/images/default.png"
     field :password, :string, virtual: true, redact: true
     field :hashed_password, :string, redact: true
     field :confirmed_at, :utc_datetime

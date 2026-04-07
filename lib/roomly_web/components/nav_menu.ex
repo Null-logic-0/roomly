@@ -7,7 +7,7 @@ defmodule RoomlyWeb.NavMenu do
   def nav_menu(assigns) do
     ~H"""
     <nav class="px-4 sm:px-6 lg:px-8 py-4 ">
-      <.user_dropdown>
+      <.user_dropdown current_scope={@current_scope}>
         <%= if @current_scope do %>
           <li class="text-center pb-2">
             {@current_scope.user.username}
