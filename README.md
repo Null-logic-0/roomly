@@ -1,18 +1,66 @@
-# Roomly
+# 👥 **Roomly**
 
-To start your Phoenix server:
+Roomly is a lightweight, real-time video meeting app built with Phoenix LiveView and WebRTC.
+It focuses on simplicity—no installs, no friction, just instant rooms you can join and start talking.
 
-* Run `mix setup` to install and setup dependencies
-* Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
+---
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+# 🚀  **Features**
 
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
+- 🏠 Create Meeting Rooms
+- Instantly create a room and share a link.
+🔗 Join via Link
+- No signup required—just open the link and join.
+- 🎥 Real-Time Video & Audio
+Peer-to-peer communication powered by WebRTC.
+- 👥 Participant List
+See who’s in the room in real time using Phoenix Presence.
+- 🎙️ Mute / Unmute
+Control your microphone during the call.
+- 💬 Chat
+Send messages to everyone in the room instantly.
 
-## Learn more
+---
 
-* Official website: https://www.phoenixframework.org/
-* Guides: https://hexdocs.pm/phoenix/overview.html
-* Docs: https://hexdocs.pm/phoenix
-* Forum: https://elixirforum.com/c/phoenix-forum
-* Source: https://github.com/phoenixframework/phoenix
+# 🏗️ **Tech Stack**
+
+- Backend: Elixir + Phoenix + LiveView
+- Realtime: Phoenix PubSub + Presence
+- Frontend: LiveView + JavaScript Hooks
+- Media: WebRTC (P2P)
+- Database: PostgreSQL
+
+---
+
+# ⚡ **How It Works**
+
+Roomly uses Phoenix LiveView for real-time UI updates and WebRTC for peer-to-peer media streaming.
+
+- LiveView manages UI state and interactions
+- Phoenix Channels / PubSub handle signaling
+- WebRTC handles video/audio streams directly between peers
+
+--- 
+
+# 🛠️ **Getting Started**
+
+```bash 
+    mix deps.get
+    mix ecto.setup
+    mix phx.server
+```
+
+##### Visit: **http://localhost:4000** 
+
+---
+
+# 📄 **License**
+
+Roomly is open-source software licensed under the **MIT License**.
+
+Feel free to use it for personal or commercial projects. See the 
+<a href="/LICENSE">
+  **LICENSE**
+</a>
+
+file for more information.
