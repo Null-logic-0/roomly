@@ -142,4 +142,13 @@ defmodule Roomly.Accounts.User do
     |> validate_length(:username, min: 3, max: 32)
     |> unique_constraint(:username)
   end
+
+  @doc """
+  Changeset for profile image upload
+  """
+  def profile_image_changeset(user, attrs, _opts \\ %{}) do
+    user
+    |> cast(attrs, [:profile_image])
+    |> validate_required([:profile_image])
+  end
 end

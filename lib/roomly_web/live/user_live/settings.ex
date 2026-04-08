@@ -1,5 +1,6 @@
 defmodule RoomlyWeb.UserLive.Settings do
   use RoomlyWeb, :live_view
+  import RoomlyWeb.ProfileUpload
 
   on_mount {RoomlyWeb.UserAuth, :require_sudo_mode}
 
@@ -15,6 +16,10 @@ defmodule RoomlyWeb.UserLive.Settings do
           <:subtitle>Manage your account email address and password settings</:subtitle>
         </.header>
       </div>
+
+      <.profile_upload form={@profile_image_form} uploads={@uploads} />
+
+      <div class="divider" />
 
       <.form
         for={@user_form}
@@ -84,13 +89,21 @@ defmodule RoomlyWeb.UserLive.Settings do
     user = socket.assigns.current_scope.user
     username_changeset = Accounts.change_user_username(user, %{}, validate_unique: false)
     password_changeset = Accounts.change_user_password(user, %{}, hash_password: false)
+    profile_image_changeset = Accounts.change_user_profile_image(user, %{})
 
     socket =
       socket
       |> assign(:current_email, user.email)
       |> assign(:page_title, "#{user.username}")
       |> assign(:user_form, to_form(username_changeset))
+      |> assign(:profile_image_form, to_form(profile_image_changeset))
       |> assign(:password_form, to_form(password_changeset))
+      |> allow_upload(
+        :profile_image,
+        accept: ~w(.png .jpeg .jpg),
+        max_entries: 1,
+        max_file_size: 10_000_000
+      )
       |> assign(:trigger_submit, false)
 
     {:ok, socket}
@@ -156,6 +169,45 @@ defmodule RoomlyWeb.UserLive.Settings do
 
       changeset ->
         {:noreply, assign(socket, password_form: to_form(changeset, action: :insert))}
+    end
+  end
+
+  def handle_event("cancel", %{"ref" => ref}, socket) do
+    {:noreply, cancel_upload(socket, :profile_image, ref)}
+  end
+
+  def handle_event("validate_profile_image", _params, socket) do
+    changeset =
+      socket.assigns.current_scope.user
+      |> Accounts.change_user_profile_image(%{})
+      |> Map.put(:action, :validate)
+
+    {:noreply, assign(socket, profile_image_form: to_form(changeset))}
+  end
+
+  def handle_event("upload", _params, socket) do
+    profile_image_paths =
+      consume_uploaded_entries(socket, :profile_image, fn meta, entry ->
+        dest = Path.join(["priv", "static", "uploads", "#{entry.uuid}-#{entry.client_name}"])
+        File.cp!(meta.path, dest)
+        url_path = static_path(socket, "/uploads/#{Path.basename(dest)}")
+        {:ok, url_path}
+      end)
+
+    case Accounts.upload_profile_image(
+           socket.assigns.current_scope.user,
+           %{"profile_image" => List.first(profile_image_paths)}
+         ) do
+      {:ok, updated_user} ->
+        updated_scope = %{socket.assigns.current_scope | user: updated_user}
+
+        {:noreply,
+         socket
+         |> assign(:current_scope, updated_scope)
+         |> put_flash(:info, "Profile image updated!")}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, profile_image_form: to_form(changeset))}
     end
   end
 end

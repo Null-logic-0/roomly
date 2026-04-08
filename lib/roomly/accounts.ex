@@ -299,6 +299,19 @@ defmodule Roomly.Accounts do
     :ok
   end
 
+  @doc """
+   Profile image upload
+  """
+  def upload_profile_image(user, attrs \\ %{}) do
+    user
+    |> User.profile_image_changeset(attrs)
+    |> Repo.insert_or_update()
+  end
+
+  def change_user_profile_image(user, attrs \\ %{}) do
+    User.profile_image_changeset(user, attrs)
+  end
+
   ## Token helper
 
   defp update_user_and_delete_all_tokens(changeset) do
