@@ -14,23 +14,25 @@ defmodule RoomlyWeb.HeroSection do
     </div>
 
     <div class="flex flex-col gap-4 ">
-      <.button class="btn btn-primary py-6 flex items-center justify-between">
-        <span class="flex items-center  gap-2">
-          <.icon name="hero-plus-solid" class="size-6" /> Create Meeting
-        </span>
-
-        <span
-          :if={!@current_scope}
-          class="bg-white  text-xs p-2  text-base-content rounded-sm"
+      <%= if @current_scope do %>
+        <.button
+          phx-click="create_room"
+          class="btn btn-primary py-6 flex items-center justify-between"
         >
-          Sign in Required
-        </span>
-      </.button>
-      <.button class="btn btn-base py-6 flex items-center justify-between">
-        <span class="flex items-center gap-2">
-          <.icon name="hero-users-solid" class="size-6" /> Join Meeting
-        </span>
-      </.button>
+          <span class="flex items-center  gap-2">
+            <.icon name="hero-plus-solid" class="size-6" /> Create Meeting
+          </span>
+        </.button>
+      <% else %>
+        <.button
+          phx-click={JS.navigate(~p"/users/log-in")}
+          class="btn btn-primary py-6 flex items-center justify-between"
+        >
+          <span class="flex items-center  gap-2">
+            <.icon name="hero-arrow-left-end-on-rectangle" class="size-6" /> Log in
+          </span>
+        </.button>
+      <% end %>
     </div>
     """
   end

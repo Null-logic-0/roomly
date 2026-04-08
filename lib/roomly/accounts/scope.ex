@@ -18,7 +18,7 @@ defmodule Roomly.Accounts.Scope do
 
   alias Roomly.Accounts.User
 
-  defstruct user: nil
+  defstruct user: nil, room: nil
 
   @doc """
   Creates a scope for the given user.
