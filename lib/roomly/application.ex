@@ -12,6 +12,7 @@ defmodule Roomly.Application do
       Roomly.Repo,
       {DNSCluster, query: Application.get_env(:roomly, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Roomly.PubSub},
+      RoomlyWeb.Presence,
       # Start a worker by calling: Roomly.Worker.start_link(arg)
       # {Roomly.Worker, arg},
       # Start to serve requests, typically the last entry

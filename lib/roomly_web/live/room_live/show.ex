@@ -2,6 +2,10 @@ defmodule RoomlyWeb.RoomLive.Show do
   use RoomlyWeb, :live_view
 
   alias Roomly.Rooms
+  alias RoomlyWeb.Presence
+
+  import RoomlyWeb.Room.AppHeader
+  import RoomlyWeb.Room.AppFooter
 
   @max_visible 6
 
@@ -16,15 +20,10 @@ defmodule RoomlyWeb.RoomLive.Show do
       end)
 
     ~H"""
+    <Layouts.flash_group flash={@flash} />
+
     <div class="bg-gray-900 w-full h-screen flex flex-col overflow-hidden">
-      <header class="flex justify-between items-center px-4 py-3 bg-gray-800 shrink-0">
-        <h1 class="text-lg font-semibold text-white tracking-wide">
-          {String.upcase(@room.user.username)}'S ROOM
-        </h1>
-        <div class="bg-indigo-500 px-3 py-1.5 text-white flex items-center gap-2 rounded-lg text-sm">
-          <.icon name="hero-video-camera" class="size-4 text-red-400" /> 01:02:32
-        </div>
-      </header>
+      <.app_header room={@room} seconds={@elapsed_seconds} />
 
       <main style={grid_style(@tile_count)} class="flex-1 min-h-0 p-3">
         <%= for {user, idx} <- Enum.with_index(@visible) do %>
@@ -58,76 +57,13 @@ defmodule RoomlyWeb.RoomLive.Show do
         <% end %>
       </main>
 
-      <footer class="shrink-0 bg-gray-800 px-4 py-3 flex items-center justify-between">
-        <div class="text-indigo-400 text-sm bg-gray-700 px-3 py-1.5 rounded-lg">
-          {@room.slug}
-        </div>
-        <div class="flex gap-3 items-center">
-          <.button class="btn btn-square btn-ghost text-white">
-            <.icon name="hero-speaker-wave" class="size-5" />
-          </.button>
-          <.button class="btn btn-square btn-ghost text-white">
-            <.icon name="hero-video-camera" class="size-5" />
-          </.button>
-          <.button class="btn btn-error px-6">
-            End Call
-          </.button>
-        </div>
-        <div class="flex gap-2 items-center">
-          <div class="dropdown dropdown-top dropdown-end">
-            <button tabindex="0" role="button" class="m-1 btn btn-ghost btn-square text-indigo-400">
-              <.icon name="hero-chat-bubble-left" class="size-5" />
-            </button>
-            <div
-              tabindex="-1"
-              class="dropdown-content menu bg-base-100 rounded-box z-1 w-sm p-2 shadow-sm"
-            >
-              <div class="chat chat-start ">
-                <div class="chat-header">
-                  Obi-Wan Kenobi <time class="text-xs opacity-50">2 hours ago</time>
-                </div>
-                <div class="chat-bubble">You were the Chosen One!</div>
-                <div class="chat-footer opacity-50">Seen</div>
-              </div>
-              <div class="chat chat-start">
-                <div class="chat-header">
-                  Obi-Wan Kenobi <time class="text-xs opacity-50">2 hour ago</time>
-                </div>
-                <div class="chat-bubble">I loved you.</div>
-                <div class="chat-footer opacity-50">Delivered</div>
-              </div>
-              <form>
-                <div class="flex items-end justify-end gap-2 relative">
-                  <textarea
-                    class="textarea textarea-bordered w-full"
-                    placeholder="Type your message..."
-                  />
-                  <button type="submit" class="btn bg-indigo-500 btn-circle absolute right-2 bottom-2">
-                    <.icon name="hero-paper-airplane" class="size-4 text-white" />
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-
-          <div class="dropdown dropdown-top dropdown-end">
-            <button tabindex="0" role="button" class="m-1 btn btn-ghost btn-square text-indigo-400">
-              <.icon name="hero-user-group" class="size-5" />
-            </button>
-            <div
-              tabindex="-1"
-              class="dropdown-content menu bg-base-100 rounded-box z-1 w-40 p-2 shadow-sm"
-            >
-              <div class="avatar space-x-2">
-                <div class="w-7 rounded-full">
-                  <img src="https://img.daisyui.com/images/profile/demo/gordon@192.webp" />
-                </div>
-                <span class="avatar-badge">john doe</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <.app_footer
+        message_form={@message_form}
+        room={@room}
+        messages={@streams.messages}
+        messages_count={@messages_count}
+        presences={@presences}
+      />
     </div>
     """
   end
@@ -151,26 +87,195 @@ defmodule RoomlyWeb.RoomLive.Show do
   def mount(%{"slug" => slug}, _session, socket) do
     users = [
       %{id: "me", name: "You", color: "#1a73e8", muted: false},
-      %{id: "u1", name: "Alex", color: "#34a853", muted: false},
-      %{id: "u2", name: "Sam", color: "#fbbc04", muted: true},
-      %{id: "u3", name: "Jordan", color: "#ea4335", muted: false},
-      %{id: "u4", name: "Jordan", color: "#ea4335", muted: false},
-      %{id: "u5", name: "Jordan", color: "#ea4335", muted: false},
-      %{id: "u6", name: "Jordan", color: "#ea4335", muted: false},
-      %{id: "u7", name: "Jordan", color: "#ea4335", muted: false}
+      %{id: "u1", name: "Alex", color: "#34a853", muted: false}
+      # %{id: "u2", name: "Sam", color: "#fbbc04", muted: true},
+      # %{id: "u3", name: "Jordan", color: "#ea4335", muted: false},
+      # %{id: "u4", name: "Jordan", color: "#ea4335", muted: false},
+      # %{id: "u5", name: "Jordan", color: "#ea4335", muted: false},
+      # %{id: "u6", name: "Jordan", color: "#ea4335", muted: false},
+      # %{id: "u7", name: "Jordan", color: "#ea4335", muted: false}
     ]
+
+    current_scope = socket.assigns.current_scope
+
+    if connected?(socket) do
+      Phoenix.PubSub.subscribe(Roomly.PubSub, topic(slug))
+      :timer.send_interval(1000, self(), :tick)
+
+      {:ok, _} =
+        Presence.track(self(), topic(slug), current_scope.user.id, %{
+          username: current_scope.user.username,
+          profile_image: current_scope.user.profile_image
+        })
+    end
+
+    presences =
+      if connected?(socket) do
+        Presence.list(topic(slug))
+      else
+        %{}
+      end
+
+    messages = Rooms.list_messages(slug)
 
     case Rooms.get_room_by_slug!(slug) do
       nil ->
         {:ok, redirect(socket, to: "/")}
 
       room ->
-        {:ok,
-         socket
-         |> assign(:room, room)
-         |> assign(:page_title, "#{room.slug}")
-         |> assign(:users, users)
-         |> assign(:speaking_id, nil)}
+        socket =
+          socket
+          |> assign(:room, room)
+          |> assign(:page_title, "#{room.slug}")
+          |> assign(:users, users)
+          |> assign(:message_form, to_form(%{}))
+          |> stream(:messages, messages)
+          |> assign(:messages_count, length(messages))
+          |> assign(:speaking_id, nil)
+          |> assign(:presences, presence_map(presences))
+          |> assign(:joined_at, System.monotonic_time(:second))
+          |> assign(:elapsed_seconds, 0)
+
+        {:ok, socket}
     end
+  end
+
+  defp topic(slug), do: "participants:#{slug}"
+
+  def handle_event("send_message", %{"body" => body}, socket) do
+    slug = socket.assigns.room.slug
+    scope = socket.assigns.current_scope
+
+    send_message =
+      Rooms.create_message(scope, slug, %{context: body})
+
+    case send_message do
+      {:ok, _message} ->
+        {:noreply, push_event(socket, "clear_input", %{})}
+
+      {:error, _changeset} ->
+        {:noreply, socket}
+    end
+  end
+
+  def handle_event("send_message_keydown", %{"key" => "Enter", "value" => body}, socket) do
+    handle_event("send_message", %{"body" => body}, socket)
+  end
+
+  def handle_event("send_message_keydown", _params, socket) do
+    {:noreply, socket}
+  end
+
+  def handle_info({:new_message, message}, socket) do
+    socket =
+      socket
+      |> stream_insert(:messages, message)
+      |> update(:messages_count, &(&1 + 1))
+
+    {:noreply, socket}
+  end
+
+  def handle_info(:tick, socket) do
+    elapsed = System.monotonic_time(:second) - socket.assigns.joined_at
+    {:noreply, assign(socket, :elapsed_seconds, elapsed)}
+  end
+
+  def handle_info(%{event: "presence_diff", payload: diff}, socket) do
+    socket =
+      socket
+      |> remove_presences(diff.leaves)
+      |> add_presences(diff.joins)
+
+    {:noreply, socket}
+  end
+
+  defp remove_presences(socket, leaves) do
+    current_user_id = to_string(socket.assigns.current_scope.user.id)
+
+    leaving_users =
+      leaves
+      |> Enum.reject(fn {user_id, _} -> user_id == current_user_id end)
+
+    user_ids = Enum.map(leaving_users, fn {user_id, _} -> user_id end)
+
+    flash_message =
+      leaving_users
+      |> Enum.map(fn {_, info} ->
+        metas = info[:metas] || info["metas"] || []
+
+        case metas do
+          [meta | _] -> meta[:username] || meta["username"]
+          _ -> nil
+        end
+      end)
+      |> Enum.reject(&is_nil/1)
+      |> case do
+        [] -> nil
+        [name] -> "#{name} left the room"
+        [name1, name2] -> "#{name1} and #{name2} left the room"
+        [name | _rest] -> "#{name} and others left the room"
+      end
+
+    presences = Map.drop(socket.assigns.presences, user_ids)
+    socket = if flash_message, do: put_flash(socket, :info, flash_message), else: socket
+    assign(socket, :presences, presences)
+  end
+
+  defp add_presences(socket, joins) do
+    current_user_id = to_string(socket.assigns.current_scope.user.id)
+    joining_users = Enum.reject(joins, fn {user_id, _} -> user_id == current_user_id end)
+
+    flash_message =
+      joining_users
+      |> Enum.map(fn {_, info} ->
+        metas = info[:metas] || info["metas"] || []
+
+        case metas do
+          [meta | _] -> meta[:username] || meta["username"]
+          _ -> nil
+        end
+      end)
+      |> Enum.reject(&is_nil/1)
+      |> case do
+        [] -> nil
+        [name] -> "#{name} joined the room"
+        [name1, name2] -> "#{name1} and #{name2} joined the room"
+        [name | _rest] -> "#{name} and others joined the room"
+      end
+
+    presences = Map.merge(socket.assigns.presences, presence_map_from_diff(joins))
+    socket = if flash_message, do: put_flash(socket, :info, flash_message), else: socket
+    assign(socket, :presences, presences)
+  end
+
+  defp presence_map(presences) do
+    Enum.into(presences, %{}, fn {user_id, presence_map} ->
+      metas = Map.get(presence_map, :metas) || Map.get(presence_map, "metas")
+      [meta | _] = metas
+
+      %{
+        username: Map.get(meta, :username) || Map.get(meta, "username"),
+        profile_image: Map.get(meta, :profile_image) || Map.get(meta, "profile_image")
+      }
+      |> then(&{user_id, &1})
+    end)
+  end
+
+  defp presence_map_from_diff(presences) do
+    Enum.into(presences, %{}, fn {user_id, info} ->
+      metas = info[:metas] || info["metas"] || []
+
+      case metas do
+        [meta | _] ->
+          {user_id,
+           %{
+             username: meta[:username] || meta["username"],
+             profile_image: meta[:profile_image] || meta["profile_image"]
+           }}
+
+        _ ->
+          {user_id, %{}}
+      end
+    end)
   end
 end

@@ -318,16 +318,12 @@ defmodule Roomly.Rooms do
     * {:deleted, %Message{}}
 
   """
-  def subscribe_messages(%Scope{} = scope) do
-    key = scope.user.id
-
-    Phoenix.PubSub.subscribe(Roomly.PubSub, "user:#{key}:messages")
+  def subscribe_messages(slug) do
+    Phoenix.PubSub.subscribe(Roomly.PubSub, "participants:#{slug}")
   end
 
-  defp broadcast_message(%Scope{} = scope, message) do
-    key = scope.user.id
-
-    Phoenix.PubSub.broadcast(Roomly.PubSub, "user:#{key}:messages", message)
+  defp broadcast_message(slug, message) do
+    Phoenix.PubSub.broadcast(Roomly.PubSub, "participants:#{slug}", {:new_message, message})
   end
 
   @doc """
@@ -335,12 +331,17 @@ defmodule Roomly.Rooms do
 
   ## Examples
 
-      iex> list_messages(scope)
+      iex> list_messages(slug)
       [%Message{}, ...]
 
   """
-  def list_messages(%Scope{} = scope) do
-    Repo.all_by(Message, user_id: scope.user.id)
+  def list_messages(slug) do
+    Message
+    |> join(:inner, [m], r in Roomly.Rooms.Room, on: r.id == m.room_id)
+    |> where([m, r], r.slug == ^slug)
+    |> order_by([m], asc: m.inserted_at)
+    |> preload(:user)
+    |> Repo.all()
   end
 
   @doc """
@@ -373,12 +374,15 @@ defmodule Roomly.Rooms do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_message(%Scope{} = scope, attrs) do
-    with {:ok, message = %Message{}} <-
+  def create_message(%Scope{} = scope, slug, attrs) do
+    room = get_room_by_slug!(slug)
+
+    with {:ok, message} <-
            %Message{}
-           |> Message.changeset(attrs, scope)
+           |> Message.changeset(Map.put(attrs, :room_id, room.id), scope)
            |> Repo.insert() do
-      broadcast_message(scope, {:created, message})
+      message = Repo.preload(message, :user)
+      broadcast_message(slug, message)
       {:ok, message}
     end
   end
@@ -402,7 +406,7 @@ defmodule Roomly.Rooms do
            message
            |> Message.changeset(attrs, scope)
            |> Repo.update() do
-      broadcast_message(scope, {:updated, message})
+      broadcast_message(attrs["room_slug"] || attrs[:room_slug], {:created, message})
       {:ok, message}
     end
   end

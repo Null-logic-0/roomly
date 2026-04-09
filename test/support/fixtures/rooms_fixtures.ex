@@ -31,16 +31,13 @@ defmodule Roomly.RoomsFixtures do
     participant
   end
 
-  @doc """
-  Generate a message.
-  """
-  def message_fixture(scope, attrs \\ %{}) do
-    attrs =
-      Enum.into(attrs, %{
-        context: "some context"
-      })
+  # def message_fixture(scope, attrs \\ %{}) do
+  #   attrs =
+  #     Enum.into(attrs, %{
+  #       context: "some context"
+  #     })
 
-    {:ok, message} = Roomly.Rooms.create_message(scope, attrs)
-    message
-  end
+  #   {:ok, message} = Roomly.Rooms.create_message(scope, attrs)
+  #   message
+  # end
 end

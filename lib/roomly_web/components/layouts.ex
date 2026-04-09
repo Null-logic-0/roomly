@@ -72,9 +72,8 @@ defmodule RoomlyWeb.Layouts do
   def flash_group(assigns) do
     ~H"""
     <div id={@id} aria-live="polite">
-      <.flash kind={:info} flash={@flash} />
-      <.flash kind={:error} flash={@flash} />
-
+      <.flash kind={:info} flash={@flash} phx-hook=".auto_dismiss" id="flash-info" />
+      <.flash kind={:error} flash={@flash} phx-hook=".auto_dismiss" id="flash-error" />
       <.flash
         id="client-error"
         kind={:error}
@@ -86,7 +85,6 @@ defmodule RoomlyWeb.Layouts do
         {gettext("Attempting to reconnect")}
         <.icon name="hero-arrow-path" class="ml-1 size-3 motion-safe:animate-spin" />
       </.flash>
-
       <.flash
         id="server-error"
         kind={:error}
@@ -98,6 +96,18 @@ defmodule RoomlyWeb.Layouts do
         {gettext("Attempting to reconnect")}
         <.icon name="hero-arrow-path" class="ml-1 size-3 motion-safe:animate-spin" />
       </.flash>
+
+      <script :type={Phoenix.LiveView.ColocatedHook} name=".auto_dismiss">
+        export default {
+          mounted() {
+            setTimeout(() => {
+              this.el.style.transition = "opacity 0.5s"
+              this.el.style.opacity = "0"
+              setTimeout(() => this.el.remove(), 500)
+            }, 2000)
+          }
+        }
+      </script>
     </div>
     """
   end
