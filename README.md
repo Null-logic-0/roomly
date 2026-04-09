@@ -13,7 +13,6 @@ It focuses on simplicity—no installs, no friction, just instant rooms you can 
 - 🏠 Create Meeting Rooms
 - Instantly create a room and share a link.
 🔗 Join via Link
-- No signup required—just open the link and join.
 - 🎥 Real-Time Video & Audio
 Peer-to-peer communication powered by WebRTC.
 - 👥 Participant List
