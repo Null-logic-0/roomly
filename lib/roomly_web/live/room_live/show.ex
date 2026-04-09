@@ -2,7 +2,6 @@ defmodule RoomlyWeb.RoomLive.Show do
   use RoomlyWeb, :live_view
 
   alias Roomly.Rooms
-  alias Roomly.Accounts.Scope
 
   @max_visible 6
 
@@ -20,7 +19,7 @@ defmodule RoomlyWeb.RoomLive.Show do
     <div class="bg-gray-900 w-full h-screen flex flex-col overflow-hidden">
       <header class="flex justify-between items-center px-4 py-3 bg-gray-800 shrink-0">
         <h1 class="text-lg font-semibold text-white tracking-wide">
-          {String.upcase(@current_scope.user.username)}'S ROOM
+          {String.upcase(@room.user.username)}'S ROOM
         </h1>
         <div class="bg-indigo-500 px-3 py-1.5 text-white flex items-center gap-2 rounded-lg text-sm">
           <.icon name="hero-video-camera" class="size-4 text-red-400" /> 01:02:32
@@ -51,7 +50,7 @@ defmodule RoomlyWeb.RoomLive.Show do
               </span>
               <%= if user.muted do %>
                 <span class="absolute bottom-2 right-2 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center">
-                  <.icon name="hero-x-mark" class="size-3 text-white" />
+                  <.icon name="hero-speaker-x-mark" class="size-3 text-white" />
                 </span>
               <% end %>
             </div>
@@ -61,7 +60,7 @@ defmodule RoomlyWeb.RoomLive.Show do
 
       <footer class="shrink-0 bg-gray-800 px-4 py-3 flex items-center justify-between">
         <div class="text-indigo-400 text-sm bg-gray-700 px-3 py-1.5 rounded-lg">
-          {@current_scope.room.slug}
+          {@room.slug}
         </div>
         <div class="flex gap-3 items-center">
           <.button class="btn btn-square btn-ghost text-white">
@@ -75,12 +74,58 @@ defmodule RoomlyWeb.RoomLive.Show do
           </.button>
         </div>
         <div class="flex gap-2 items-center">
-          <.button class="btn btn-ghost btn-square text-indigo-400">
-            <.icon name="hero-chat-bubble-left" class="size-5" />
-          </.button>
-          <.button class="btn btn-ghost btn-square text-indigo-400">
-            <.icon name="hero-users" class="size-5" />
-          </.button>
+          <div class="dropdown dropdown-top dropdown-end">
+            <button tabindex="0" role="button" class="m-1 btn btn-ghost btn-square text-indigo-400">
+              <.icon name="hero-chat-bubble-left" class="size-5" />
+            </button>
+            <div
+              tabindex="-1"
+              class="dropdown-content menu bg-base-100 rounded-box z-1 w-sm p-2 shadow-sm"
+            >
+              <div class="chat chat-start ">
+                <div class="chat-header">
+                  Obi-Wan Kenobi <time class="text-xs opacity-50">2 hours ago</time>
+                </div>
+                <div class="chat-bubble">You were the Chosen One!</div>
+                <div class="chat-footer opacity-50">Seen</div>
+              </div>
+              <div class="chat chat-start">
+                <div class="chat-header">
+                  Obi-Wan Kenobi <time class="text-xs opacity-50">2 hour ago</time>
+                </div>
+                <div class="chat-bubble">I loved you.</div>
+                <div class="chat-footer opacity-50">Delivered</div>
+              </div>
+              <form>
+                <div class="flex items-end justify-end gap-2 relative">
+                  <textarea
+                    class="textarea textarea-bordered w-full"
+                    placeholder="Type your message..."
+                  />
+                  <button type="submit" class="btn bg-indigo-500 btn-circle absolute right-2 bottom-2">
+                    <.icon name="hero-paper-airplane" class="size-4 text-white" />
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="dropdown dropdown-top dropdown-end">
+            <button tabindex="0" role="button" class="m-1 btn btn-ghost btn-square text-indigo-400">
+              <.icon name="hero-user-group" class="size-5" />
+            </button>
+            <div
+              tabindex="-1"
+              class="dropdown-content menu bg-base-100 rounded-box z-1 w-40 p-2 shadow-sm"
+            >
+              <div class="avatar space-x-2">
+                <div class="w-7 rounded-full">
+                  <img src="https://img.daisyui.com/images/profile/demo/gordon@192.webp" />
+                </div>
+                <span class="avatar-badge">john doe</span>
+              </div>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
@@ -104,8 +149,6 @@ defmodule RoomlyWeb.RoomLive.Show do
   defp initials(name), do: name |> String.slice(0, 2) |> String.upcase()
 
   def mount(%{"slug" => slug}, _session, socket) do
-    current_scope = socket.assigns.current_scope
-
     users = [
       %{id: "me", name: "You", color: "#1a73e8", muted: false},
       %{id: "u1", name: "Alex", color: "#34a853", muted: false},
@@ -117,7 +160,7 @@ defmodule RoomlyWeb.RoomLive.Show do
       %{id: "u7", name: "Jordan", color: "#ea4335", muted: false}
     ]
 
-    case Rooms.get_room_by_slug!(current_scope, slug) do
+    case Rooms.get_room_by_slug!(slug) do
       nil ->
         {:ok, redirect(socket, to: "/")}
 
@@ -125,7 +168,7 @@ defmodule RoomlyWeb.RoomLive.Show do
         {:ok,
          socket
          |> assign(:room, room)
-         |> assign(:current_scope, %Scope{user: current_scope.user, room: room})
+         |> assign(:page_title, "#{room.slug}")
          |> assign(:users, users)
          |> assign(:speaking_id, nil)}
     end

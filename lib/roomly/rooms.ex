@@ -76,8 +76,11 @@ defmodule Roomly.Rooms do
       ** (Ecto.NoResultsError)
 
   """
-  def get_room_by_slug!(%Scope{} = scope, slug) do
-    Repo.get_by!(Room, slug: slug, user_id: scope.user.id)
+  def get_room_by_slug!(slug) do
+    Room
+    |> where([r], r.slug == ^slug)
+    |> preload(:user)
+    |> Repo.one()
   end
 
   @doc """
