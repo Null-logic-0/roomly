@@ -34,8 +34,6 @@ defmodule Roomly.RoomForwarder do
     end
   end
 
-  # GenServer callbacks
-
   def init(slug) do
     {:ok,
      %{
@@ -43,8 +41,7 @@ defmodule Roomly.RoomForwarder do
        peer_connections: %{},
        connected_peers: MapSet.new(),
        out_tracks: %{},
-       in_tracks: %{},
-       seq_counters: %{}
+       in_tracks: %{}
      }}
   end
 
@@ -55,7 +52,7 @@ defmodule Roomly.RoomForwarder do
           state
 
         old_pc ->
-          safe_close(old_pc)
+          safe_stop(old_pc)
           cleanup_user(state, user_id)
       end
 
@@ -64,8 +61,6 @@ defmodule Roomly.RoomForwarder do
         ice_servers: @ice_servers,
         controlling_process: self()
       )
-
-    Process.monitor(pc)
 
     state =
       Enum.reduce(state.peer_connections, state, fn {other_id, _other_pc}, acc ->
@@ -107,37 +102,34 @@ defmodule Roomly.RoomForwarder do
         if other_id == user_id do
           acc
         else
-          if pc_alive?(other_pc) do
-            stream_id = MediaStreamTrack.generate_stream_id()
-            audio_track = MediaStreamTrack.new(:audio, [stream_id])
-            video_track = MediaStreamTrack.new(:video, [stream_id])
-            {:ok, _} = PeerConnection.add_track(other_pc, audio_track)
-            {:ok, _} = PeerConnection.add_track(other_pc, video_track)
+          stream_id = MediaStreamTrack.generate_stream_id()
+          audio_track = MediaStreamTrack.new(:audio, [stream_id])
+          video_track = MediaStreamTrack.new(:video, [stream_id])
+          {:ok, _} = PeerConnection.add_track(other_pc, audio_track)
+          {:ok, _} = PeerConnection.add_track(other_pc, video_track)
 
-            Phoenix.PubSub.broadcast(
-              Roomly.PubSub,
-              "participants:#{acc.slug}",
-              {:peer_stream_id, user_id, stream_id, other_id}
-            )
+          Phoenix.PubSub.broadcast(
+            Roomly.PubSub,
+            "participants:#{acc.slug}",
+            {:peer_stream_id, user_id, stream_id, other_id}
+          )
 
-            {:ok, renego_offer} = PeerConnection.create_offer(other_pc)
-            :ok = PeerConnection.set_local_description(other_pc, renego_offer)
+          send_pli_for_user(user_id, acc)
 
-            offer_json_out = renego_offer |> SessionDescription.to_json() |> Jason.encode!()
+          {:ok, renego_offer} = PeerConnection.create_offer(other_pc)
+          :ok = PeerConnection.set_local_description(other_pc, renego_offer)
 
-            Phoenix.PubSub.broadcast(
-              Roomly.PubSub,
-              "participants:#{acc.slug}",
-              {:webrtc_renegotiate, other_id, offer_json_out}
-            )
+          offer_json_out = renego_offer |> SessionDescription.to_json() |> Jason.encode!()
 
-            acc
-            |> put_in([:out_tracks, {other_id, user_id, :audio}], audio_track.id)
-            |> put_in([:out_tracks, {other_id, user_id, :video}], video_track.id)
-          else
-            safe_close(other_pc)
-            cleanup_user(acc, other_id)
-          end
+          Phoenix.PubSub.broadcast(
+            Roomly.PubSub,
+            "participants:#{acc.slug}",
+            {:webrtc_renegotiate, other_id, offer_json_out}
+          )
+
+          acc
+          |> put_in([:out_tracks, {other_id, user_id, :audio}], audio_track.id)
+          |> put_in([:out_tracks, {other_id, user_id, :video}], video_track.id)
         end
       end)
 
@@ -150,15 +142,12 @@ defmodule Roomly.RoomForwarder do
         {:noreply, state}
 
       pc ->
-        if pc_alive?(pc) do
-          answer =
-            answer_json
-            |> Jason.decode!()
-            |> SessionDescription.from_json()
+        answer =
+          answer_json
+          |> Jason.decode!()
+          |> SessionDescription.from_json()
 
-          :ok = PeerConnection.set_remote_description(pc, answer)
-        end
-
+        :ok = PeerConnection.set_remote_description(pc, answer)
         {:noreply, state}
     end
   end
@@ -169,15 +158,12 @@ defmodule Roomly.RoomForwarder do
         {:noreply, state}
 
       pc ->
-        if pc_alive?(pc) do
-          candidate =
-            candidate_json
-            |> Jason.decode!()
-            |> ICECandidate.from_json()
+        candidate =
+          candidate_json
+          |> Jason.decode!()
+          |> ICECandidate.from_json()
 
-          _ = PeerConnection.add_ice_candidate(pc, candidate)
-        end
-
+        _ = PeerConnection.add_ice_candidate(pc, candidate)
         {:noreply, state}
     end
   end
@@ -188,7 +174,7 @@ defmodule Roomly.RoomForwarder do
         {:noreply, state}
 
       pc ->
-        safe_close(pc)
+        safe_stop(pc)
         {:noreply, cleanup_user(state, user_id)}
     end
   end
@@ -197,7 +183,6 @@ defmodule Roomly.RoomForwarder do
     {:noreply, maybe_remove_pc(state, pc_pid)}
   end
 
-  # ICE candidate gathered -> push to browser
   def handle_info({:ex_webrtc, pc_pid, {:ice_candidate, candidate}}, state) do
     case find_user_by_pc(state, pc_pid) do
       nil ->
@@ -227,59 +212,60 @@ defmodule Roomly.RoomForwarder do
     end
   end
 
-  def handle_info({:ex_webrtc, pc_pid, {:rtp, track_id, _rid, packet}}, state) do
+  def handle_info({:ex_webrtc, _pc_pid, {:rtp, track_id, _rid, packet}}, state) do
+    case Map.get(state.in_tracks, track_id) do
+      nil ->
+        {:noreply, state}
+
+      {source_user_id, kind} ->
+        Enum.each(state.peer_connections, fn {receiver_id, receiver_pc} ->
+          if receiver_id != source_user_id do
+            out_track_id = Map.get(state.out_tracks, {receiver_id, source_user_id, kind})
+
+            if out_track_id && MapSet.member?(state.connected_peers, receiver_id) do
+              PeerConnection.send_rtp(receiver_pc, out_track_id, packet)
+            end
+          end
+        end)
+
+        {:noreply, state}
+    end
+  end
+
+  def handle_info({:ex_webrtc, pc_pid, {:rtcp, packets}}, state) do
     case find_user_by_pc(state, pc_pid) do
       nil ->
         {:noreply, state}
 
-      source_user_id ->
-        case Map.get(state.in_tracks, track_id) do
-          {^source_user_id, kind} ->
-            state =
-              Enum.reduce(state.peer_connections, state, fn {receiver_id, receiver_pc}, acc ->
-                if receiver_id == source_user_id do
-                  acc
-                else
-                  out_track_id = Map.get(acc.out_tracks, {receiver_id, source_user_id, kind})
+      receiver_id ->
+        for packet <- packets do
+          case packet do
+            {_track_id, %ExRTCP.Packet.PayloadFeedback.PLI{}} ->
+              Enum.each(state.peer_connections, fn {source_id, source_pc} ->
+                if source_id != receiver_id do
+                  case Map.get(state.in_tracks, find_in_track(state, source_id, :video)) do
+                    {^source_id, :video} ->
+                      PeerConnection.send_pli(
+                        source_pc,
+                        find_in_track(state, source_id, :video)
+                      )
 
-                  peer_ready =
-                    out_track_id &&
-                      pc_alive?(receiver_pc) &&
-                      MapSet.member?(acc.connected_peers, receiver_id)
-
-                  if peer_ready do
-                    counter_key = {receiver_id, source_user_id, kind}
-                    seq = Map.get(acc.seq_counters, counter_key, 0)
-                    next_seq = rem(seq + 1, 65_536)
-                    rewritten_packet = %{packet | sequence_number: next_seq}
-
-                    try do
-                      PeerConnection.send_rtp(receiver_pc, out_track_id, rewritten_packet)
-                    rescue
-                      _ -> :ok
-                    catch
-                      :exit, _ -> :ok
-                    end
-
-                    put_in(acc, [:seq_counters, counter_key], next_seq)
-                  else
-                    acc
+                    _ ->
+                      :ok
                   end
                 end
               end)
 
-            {:noreply, state}
-
-          _ ->
-            {:noreply, state}
+            _ ->
+              :ok
+          end
         end
+
+        {:noreply, state}
     end
   end
 
-  def handle_info(
-        {:ex_webrtc, pc_pid, {:connection_state_change, new_state}},
-        state
-      ) do
+  def handle_info({:ex_webrtc, pc_pid, {:connection_state_change, new_state}}, state) do
     state =
       case find_user_by_pc(state, pc_pid) do
         nil ->
@@ -287,6 +273,7 @@ defmodule Roomly.RoomForwarder do
 
         user_id ->
           if new_state == :connected do
+            send_pli_for_all_sources(state, user_id)
             update_in(state, [:connected_peers], &MapSet.put(&1, user_id))
           else
             update_in(state, [:connected_peers], &MapSet.delete(&1, user_id))
@@ -300,10 +287,7 @@ defmodule Roomly.RoomForwarder do
     end
   end
 
-  def handle_info(
-        {:ex_webrtc, pc_pid, {:ice_connection_state_change, ice_state}},
-        state
-      ) do
+  def handle_info({:ex_webrtc, pc_pid, {:ice_connection_state_change, ice_state}}, state) do
     if ice_state in [:failed, :closed] do
       {:noreply, maybe_remove_pc(state, pc_pid)}
     else
@@ -311,10 +295,7 @@ defmodule Roomly.RoomForwarder do
     end
   end
 
-  def handle_info(
-        {:ex_webrtc, pc_pid, {:signaling_state_change, :closed}},
-        state
-      ) do
+  def handle_info({:ex_webrtc, pc_pid, {:signaling_state_change, :closed}}, state) do
     {:noreply, maybe_remove_pc(state, pc_pid)}
   end
 
@@ -323,16 +304,12 @@ defmodule Roomly.RoomForwarder do
 
   # ---- Private ----
 
-  defp safe_close(pc) do
-    PeerConnection.close(pc)
+  defp safe_stop(pc) do
+    PeerConnection.stop(pc)
   rescue
     _ -> :ok
   catch
     :exit, _ -> :ok
-  end
-
-  defp pc_alive?(pc) do
-    is_pid(pc) && Process.alive?(pc)
   end
 
   defp find_user_by_pc(state, pc_pid) do
@@ -347,8 +324,36 @@ defmodule Roomly.RoomForwarder do
         state
 
       user_id ->
-        safe_close(pc_pid)
+        safe_stop(pc_pid)
         cleanup_user(state, user_id)
+    end
+  end
+
+  defp find_in_track(state, source_user_id, kind) do
+    Enum.find_value(state.in_tracks, fn {track_id, {uid, k}} ->
+      if uid == source_user_id and k == kind, do: track_id
+    end)
+  end
+
+  defp send_pli_for_all_sources(state, _new_user_id) do
+    Enum.each(state.peer_connections, fn {source_id, source_pc} ->
+      case find_in_track(state, source_id, :video) do
+        nil -> :ok
+        track_id -> PeerConnection.send_pli(source_pc, track_id)
+      end
+    end)
+  end
+
+  defp send_pli_for_user(user_id, state) do
+    case Map.get(state.peer_connections, user_id) do
+      nil ->
+        :ok
+
+      source_pc ->
+        case find_in_track(state, user_id, :video) do
+          nil -> :ok
+          track_id -> PeerConnection.send_pli(source_pc, track_id)
+        end
     end
   end
 
@@ -365,18 +370,10 @@ defmodule Roomly.RoomForwarder do
       end)
       |> Map.new()
 
-    seq_counters =
-      state.seq_counters
-      |> Enum.reject(fn {{receiver_id, sender_id, _kind}, _} ->
-        receiver_id == user_id or sender_id == user_id
-      end)
-      |> Map.new()
-
     state
     |> update_in([:peer_connections], &Map.delete(&1, user_id))
     |> update_in([:connected_peers], &MapSet.delete(&1, user_id))
     |> Map.put(:out_tracks, out_tracks)
     |> Map.put(:in_tracks, in_tracks)
-    |> Map.put(:seq_counters, seq_counters)
   end
 end

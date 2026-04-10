@@ -5,6 +5,7 @@ defmodule RoomlyWeb.RoomLive.Show do
   alias RoomlyWeb.Presence
 
   import RoomlyWeb.Room.AppHeader
+  import RoomlyWeb.Room.Video.VideoGrid
   import RoomlyWeb.Room.AppFooter
 
   @max_visible 6
@@ -25,78 +26,13 @@ defmodule RoomlyWeb.RoomLive.Show do
     <div class="bg-gray-900 w-full h-screen flex flex-col overflow-hidden">
       <.app_header room={@room} seconds={@elapsed_seconds} />
 
-      <main id="video-grid" style={grid_style(@tile_count)} class="flex-1 min-h-0 p-3">
-        <div
-          id="webrtc-hook"
-          phx-hook="WebRTC"
-          data-user-id={@my_id}
-          phx-update="ignore"
-          class="hidden"
-        />
-
-        <%= for {user, idx} <- Enum.with_index(@visible) do %>
-          <%= if idx == 5 && @overflow > 0 do %>
-            <div
-              id="overflow-tile"
-              class="rounded-xl bg-gray-700 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-600 transition-colors"
-            >
-              <span class="text-3xl font-semibold text-white">+{@overflow}</span>
-              <span class="text-xs text-gray-400 mt-1">more participants</span>
-            </div>
-          <% else %>
-            <div
-              id={"tile-#{user.id}"}
-              phx-update="ignore"
-              class="rounded-xl bg-gray-800 relative flex items-center justify-center overflow-hidden"
-              data-speaking={to_string(user.id == @speaking_id)}
-              data-my-tile={to_string(user.id == @my_id)}
-              data-user-id={user.id}
-            >
-              <img
-                id={"avatar-#{user.id}"}
-                src={user.profile_image}
-                alt={user.username}
-                class="absolute w-14 h-14 rounded-full object-cover transition-opacity"
-              />
-              <%= if user.id == @my_id do %>
-                <video
-                  id="video-me"
-                  autoplay
-                  playsinline
-                  muted
-                  class="absolute inset-0 w-full h-full object-cover opacity-0"
-                />
-              <% else %>
-                <div
-                  id={"connecting-#{user.id}"}
-                  class="absolute inset-0 flex flex-col items-center justify-center gap-2 z-20 rounded-xl bg-gray-900/70 transition-opacity duration-300"
-                >
-                  <div class="w-7 h-7 rounded-full border-2 border-white/10 border-t-indigo-400 animate-spin" />
-                  <span class="text-xs text-white/60">Connecting...</span>
-                </div>
-                <video
-                  id={"video-#{user.id}"}
-                  autoplay
-                  playsinline
-                  muted
-                  class="absolute inset-0 w-full h-full object-cover opacity-0"
-                />
-              <% end %>
-              <span class="absolute bottom-2 left-2 text-xs text-white bg-black/50 px-2 py-0.5 rounded z-10">
-                {user.username}
-              </span>
-              <%= if user.muted do %>
-                <span
-                  id={"mute-icon-#{user.id}"}
-                  class="absolute bottom-2 right-2 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center z-10"
-                >
-                  <.icon name="hero-speaker-x-mark" class="size-3 text-white" />
-                </span>
-              <% end %>
-            </div>
-          <% end %>
-        <% end %>
-      </main>
+      <.video_grid
+        my_id={@my_id}
+        overflow={@overflow}
+        speaking_id={@speaking_id}
+        visible={@visible}
+        tile_count={@tile_count}
+      />
 
       <.app_footer
         message_form={@message_form}
@@ -109,20 +45,6 @@ defmodule RoomlyWeb.RoomLive.Show do
       />
     </div>
     """
-  end
-
-  defp grid_style(n) do
-    {cols, rows} =
-      case n do
-        1 -> {"1fr", "1fr"}
-        2 -> {"1fr 1fr", "1fr"}
-        3 -> {"1fr 1fr 1fr", "1fr"}
-        4 -> {"1fr 1fr", "1fr 1fr"}
-        5 -> {"repeat(3, 1fr)", "repeat(2, 1fr)"}
-        _ -> {"repeat(3, 1fr)", "repeat(2, 1fr)"}
-      end
-
-    "display: grid; grid-template-columns: #{cols}; grid-template-rows: #{rows}; gap: 8px;"
   end
 
   def mount(%{"slug" => slug}, _session, socket) do
@@ -182,7 +104,7 @@ defmodule RoomlyWeb.RoomLive.Show do
 
   defp topic(slug), do: "participants:#{slug}"
 
-  #  WebRTC events
+  # WebRTC events
 
   def handle_event("webrtc_offer", %{"offer" => offer_json}, socket) do
     user_id = socket.assigns.my_id

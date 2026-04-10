@@ -5,6 +5,7 @@ const WebRTC = {
     this.streamUserMap = new Map();
     this._pendingStreams = new Map();
     this._attachedStreams = new Set();
+    this._playingStreams = new Set();
 
     this.pc = new RTCPeerConnection({
       iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
@@ -17,8 +18,6 @@ const WebRTC = {
         const me = document.getElementById("video-me");
         if (me) {
 
-          me.srcObject = null;
-          me.load();
           me.srcObject = stream;
 
           me.play()
@@ -28,6 +27,7 @@ const WebRTC = {
               if (avatar) avatar.classList.add("opacity-0");
             })
             .catch((err) => {
+
               if (err.name !== "AbortError") {
                 console.error("[WebRTC] local video play failed:", err);
               }
@@ -151,21 +151,17 @@ const WebRTC = {
       if (avatar) avatar.classList.add("opacity-0");
     };
 
-
-    el.srcObject = null;
-    el.load();
-
     el.dataset.streamId = stream.id;
+
     el.srcObject = stream;
 
     el.play()
-      .then(() => {
-        reveal();
-      })
+      .then(reveal)
       .catch((err) => {
         if (err.name !== "AbortError") {
           console.error(`[WebRTC] play failed for ${userId}:`, err);
         }
+        reveal();
       });
   },
 
@@ -179,6 +175,7 @@ const WebRTC = {
     this.streamUserMap = new Map();
     this._pendingStreams = new Map();
     this._attachedStreams = new Set();
+    this._playingStreams = new Set();
 
     if (this.pc) {
       this.pc.ontrack = null;
