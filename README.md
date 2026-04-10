@@ -46,13 +46,85 @@ Roomly uses Phoenix LiveView for real-time UI updates and WebRTC for peer-to-pee
 
 # 🛠️ **Getting Started**
 
+1. Clone the repository
+
+```bash 
+    git clone https://github.com/your-username/roomly.git
+    cd roomly
+```
+2. Install dependencies 
 ```bash 
     mix deps.get
+```
+
+3. Setup the database
+
+###### Make sure PostgreSQL is running locally, then:
+```bash 
     mix ecto.setup
+```
+
+4. Environment Variables (.env)
+```bash 
+    # Optional HTTPS config
+    CERT_KEYFILE=./priv/cert/localhost-key.pem
+    CERT_CERTFILE=./priv/cert/localhost.pem
+    LOCALHOST=localhost
+```
+
+5. (Optional) Enable HTTPS (Required for WebRTC across devices)
+WebRTC requires a secure context (HTTPS) when accessing from other devices.
+
+Generate certificates:
+```bash
+    mix phx.gen.cert
+```
+
+Or use mkcert:
+```bash
+    mkcert -install
+    mkcert localhost 192.168.x.x
+```
+
+Then update your .env:
+```bash
+    CERT_KEYFILE=./192.168.x.x-key.pem
+    CERT_CERTFILE=./192.168.x.x.pem
+    LOCALHOST=192.168.x.x
+```
+
+6. Run the server
+```bash 
     mix phx.server
 ```
 
-##### Visit: **http://localhost:4000** 
+##### Visit: 
+- **http://localhost:4000** 
+- **http://localhost:4001** (if HTTPS is configured)
+
+
+_____
+
+# 🌐 **Local Network Testing**
+
+  The app is configured to bind to:
+  
+```bash 
+    ip: {0, 0, 0, 0}
+```
+
+This allows access from other devices on the same network.
+
+### **Example:**
+```bash
+    https://192.168.x.x:4001
+```
+---
+
+# ✅ **Development Status**
+- Fully working in local development
+- Tested locally with multiple browser tabs and devices on the same network
+- HTTPS support included for WebRTC compatibility
 
 ---
 
