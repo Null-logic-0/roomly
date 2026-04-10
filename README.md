@@ -39,15 +39,13 @@ Send messages to everyone in the room instantly.
 
 # WebRTC Video Call + Chat Demo
 
-
-https://github.com/user-attachments/assets/f291a8f0-195f-4a42-a1c1-0f84f8208028
-
-
+https://github.com/user-attachments/assets/092907ea-6510-411d-a687-dde5e542c250
 
 
 # Image uploads 
 
-https://github.com/user-attachments/assets/e7af1525-f82a-456f-bce9-0c96504c1a39
+https://github.com/user-attachments/assets/eeab3891-c845-4b87-a2c2-feed9b60cbc7
+
 
 
 
