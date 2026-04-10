@@ -14,11 +14,11 @@ defmodule RoomlyWeb.Room.AppFooter do
 
   def app_footer(assigns) do
     ~H"""
-    <footer class="shrink-0 bg-gray-800 px-4 py-3 flex items-center justify-between">
+    <footer class="shrink-0 bg-gray-800 px-4 py-3 flex flex-wrap items-center justify-between">
       <div class="text-indigo-400 text-sm bg-gray-700 px-3 py-1.5 rounded-lg">
         {@room.slug}
       </div>
-      <div class="flex gap-3 items-center">
+      <div class="flex gap-3 items-center ">
         <.button
           phx-click="toggle_mute"
           class={["btn btn-square btn-ghost text-white", @muted && "bg-red-500/20 text-red-400"]}
@@ -44,7 +44,7 @@ defmodule RoomlyWeb.Room.AppFooter do
         </.button>
       </div>
 
-      <div class="flex gap-2 items-center">
+      <div class="flex gap-2 items-center max-md:justify-center max-md:w-full">
         <.chat_popover
           message_form={@message_form}
           messages={@messages}

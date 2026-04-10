@@ -3,7 +3,7 @@ defmodule RoomlyWeb.Room.ShareRoom do
 
   def share_room(assigns) do
     ~H"""
-    <div class="dropdown dropdown-top dropdown-end">
+    <div class="dropdown dropdown-top dropdown-end max-md:dropdown-center">
       <button tabindex="0" role="button" class="m-1 btn btn-ghost btn-square text-indigo-400">
         <.icon name="hero-share" class="size-5" />
       </button>

@@ -20,7 +20,7 @@ defmodule RoomlyWeb.Room.Chat.ChatPopover do
 
       <div
         id="chat-panel"
-        class="hidden absolute bottom-12 right-0 bg-base-100 rounded-box z-10 w-sm p-2 shadow-lg"
+        class="hidden absolute bottom-12 right-0 max-md:-left-20 bg-base-100 rounded-box z-10 w-sm max-md:w-xs p-2 shadow-lg"
       >
         <.messages messages={@messages} messages_count={@messages_count} />
         <.chat_form form={@message_form} />
