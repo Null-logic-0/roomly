@@ -34,6 +34,25 @@ Send messages to everyone in the room instantly.
 
 ---
 
+
+## 🎥 Demo
+
+# WebRTC Video Call + Chat Demo
+
+
+https://github.com/user-attachments/assets/f291a8f0-195f-4a42-a1c1-0f84f8208028
+
+
+
+
+# Image uploads 
+
+https://github.com/user-attachments/assets/e7af1525-f82a-456f-bce9-0c96504c1a39
+
+
+
+---
+
 # ⚡ **How It Works**
 
 Roomly uses Phoenix LiveView for real-time UI updates and WebRTC for peer-to-peer media streaming.
