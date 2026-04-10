@@ -69,7 +69,8 @@ defmodule Roomly.MixProject do
       {:bandit, "~> 1.5"},
       {:ex_webrtc, "~> 0.16.0"},
       {:ex_sctp, "~> 0.1.0"},
-      {:plug_cowboy, "~> 2.5"}
+      {:plug_cowboy, "~> 2.5"},
+      {:dotenvy, "~> 0.8.0"}
     ]
   end
 

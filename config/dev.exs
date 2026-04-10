@@ -1,5 +1,23 @@
 import Config
 
+if File.exists?(".env") do
+  File.stream!(".env")
+  |> Stream.map(&String.trim/1)
+  |> Stream.reject(&(String.starts_with?(&1, "#") or &1 == ""))
+  |> Stream.map(&String.split(&1, "=", parts: 2))
+  |> Enum.each(fn
+    [key, value] ->
+      # Remove "export " prefix if present
+      key = String.replace(key, "export ", "")
+      # Remove quotes if present
+      value = String.trim(value, "\"")
+      System.put_env(key, value)
+
+    _ ->
+      :ok
+  end)
+end
+
 # Configure your database
 config :roomly, Roomly.Repo,
   username: "postgres",
@@ -16,7 +34,9 @@ config :roomly, Roomly.Repo,
 # The watchers configuration can be used to run external
 # watchers to your application. For example, we can use it
 # to bundle .js and .css sources.
-config :roomly, RoomlyWeb.Endpoint,
+
+# Base endpoint config (always present)
+base_endpoint_config = [
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
   http: [ip: {0, 0, 0, 0}, port: 4000],
@@ -28,6 +48,37 @@ config :roomly, RoomlyWeb.Endpoint,
     esbuild: {Esbuild, :install_and_run, [:roomly, ~w(--sourcemap=inline --watch)]},
     tailwind: {Tailwind, :install_and_run, [:roomly, ~w(--watch)]}
   ]
+]
+
+# Add HTTPS config only if all required env vars are set
+https_endpoint_config =
+  case {System.get_env("CERT_KEYFILE"), System.get_env("CERT_CERTFILE"),
+        System.get_env("LOCALHOST")} do
+    {keyfile, certfile, host}
+    when not is_nil(keyfile) and not is_nil(certfile) and not is_nil(host) ->
+      [
+        https: [
+          port: 4001,
+          keyfile: keyfile,
+          certfile: certfile
+        ],
+        url: [
+          host: host,
+          port: 4001,
+          scheme: "https"
+        ]
+      ]
+
+    _ ->
+      IO.puts(
+        "⚠️  HTTPS disabled: missing CERT_CERTFILE, CERT_KEYFILE, or LOCALHOST environment variables"
+      )
+
+      []
+  end
+
+# Merge and apply endpoint config
+config :roomly, RoomlyWeb.Endpoint, base_endpoint_config ++ https_endpoint_config
 
 # ## SSL Support
 #

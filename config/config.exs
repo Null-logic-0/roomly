@@ -7,6 +7,7 @@
 # General application configuration
 import Config
 
+
 config :roomly, :scopes,
   user: [
     default: true,
