@@ -15,8 +15,7 @@ defmodule Roomly.Rooms.Room do
   @doc false
   def changeset(room, attrs, user_scope) do
     room
-    |> cast(attrs, [:context, :room_id])
-    |> validate_required([:context, :room_id])
+    |> cast(attrs, [])
     |> put_change(:slug, generate_slug())
     |> put_assoc(:user, user_scope.user)
   end

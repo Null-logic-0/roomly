@@ -66,7 +66,10 @@ defmodule Roomly.MixProject do
       {:gettext, "~> 1.0"},
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
-      {:bandit, "~> 1.5"}
+      {:bandit, "~> 1.5"},
+      {:ex_webrtc, "~> 0.16.0"},
+      {:ex_sctp, "~> 0.1.0"},
+      {:plug_cowboy, "~> 2.5"}
     ]
   end
 

@@ -54,8 +54,6 @@ defmodule RoomlyWeb.Router do
       on_mount: [{RoomlyWeb.UserAuth, :require_authenticated}] do
       live "/room/:slug", RoomLive.Show
     end
-
-    post "/users/update-password", UserSessionController, :update_password
   end
 
   scope "/", RoomlyWeb do

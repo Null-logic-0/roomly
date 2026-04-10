@@ -10,7 +10,7 @@ defmodule RoomlyWeb.Room.Chat.ChatPopover do
 
   def chat_popover(assigns) do
     ~H"""
-    <div class="relative">
+    <div class="relative z-50">
       <button
         class="m-1 btn btn-ghost btn-square text-indigo-400"
         phx-click={JS.toggle(to: "#chat-panel")}

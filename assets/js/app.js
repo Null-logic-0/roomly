@@ -24,21 +24,15 @@ import { Socket } from "phoenix"
 import { LiveSocket } from "phoenix_live_view"
 import { hooks as colocatedHooks } from "phoenix-colocated/roomly"
 import topbar from "../vendor/topbar"
+import WebRTC from "./webrtc"
 
 
-// hooks.ScrollToBottom = {
-//   mounted() { this.scrollToBottom() },
-//   updated() { this.scrollToBottom() },
-//   scrollToBottom() {
-//     this.el.scrollTop = this.el.scrollHeight
-//   }
-// }
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: { _csrf_token: csrfToken },
-  hooks: { ...colocatedHooks },
+  hooks: { WebRTC, ...colocatedHooks },
 })
 
 // Show progress bar on live navigation and form submits
@@ -48,6 +42,8 @@ window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
 
 // connect if there are any LiveViews on the page
 liveSocket.connect()
+// setupWebRTC(liveSocket)
+
 
 // expose liveSocket on window for web console debug logs and latency simulation:
 // >> liveSocket.enableDebug()

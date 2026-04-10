@@ -9,6 +9,8 @@ defmodule RoomlyWeb.Room.AppFooter do
   attr :messages_count, :integer, required: true
   attr :message_form, :any, required: true
   attr :room, :any, required: true
+  attr :muted, :any, required: true
+  attr :camera_off, :any, required: true
 
   def app_footer(assigns) do
     ~H"""
@@ -17,13 +19,27 @@ defmodule RoomlyWeb.Room.AppFooter do
         {@room.slug}
       </div>
       <div class="flex gap-3 items-center">
-        <.button class="btn btn-square btn-ghost text-white">
-          <.icon name="hero-speaker-wave" class="size-5" />
+        <.button
+          phx-click="toggle_mute"
+          class={["btn btn-square btn-ghost text-white", @muted && "bg-red-500/20 text-red-400"]}
+        >
+          <.icon
+            name={if @muted, do: "hero-speaker-x-mark", else: "hero-speaker-wave"}
+            class="size-5"
+          />
         </.button>
-        <.button class="btn btn-square btn-ghost text-white">
-          <.icon name="hero-video-camera" class="size-5" />
+
+        <.button
+          phx-click="toggle_camera"
+          class={["btn btn-square btn-ghost text-white", @camera_off && "bg-red-500/20 text-red-400"]}
+        >
+          <.icon
+            name={if @camera_off, do: "hero-video-camera-slash", else: "hero-video-camera"}
+            class="size-5"
+          />
         </.button>
-        <.button class="btn btn-error px-6">
+
+        <.button phx-click="end_call" class="btn btn-error px-6">
           End Call
         </.button>
       </div>
