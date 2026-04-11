@@ -4,6 +4,30 @@ defmodule RoomlyWeb.NavMenu do
   import RoomlyWeb.ThemeToggle
   import RoomlyWeb.UserDropdown
 
+  @doc """
+  Renders the navigation menu with a user dropdown.
+
+  The menu adapts based on authentication state:
+
+  - If `current_scope` is present:
+    - Displays the username
+    - Shows links to Settings and Log out
+
+  - If `current_scope` is nil:
+    - Shows Register and Log in links
+
+  Always includes:
+  - Theme toggle control at the bottom of the dropdown
+
+  ## Assigns
+
+    * `:current_scope` - The current user/session scope (nil if unauthenticated)
+
+  """
+  attr :current_scope, :any,
+    default: nil,
+    doc: "Current authenticated scope (e.g., user or session)"
+
   def nav_menu(assigns) do
     ~H"""
     <nav class="px-4 sm:px-6 lg:px-8 py-4 ">

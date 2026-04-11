@@ -1,9 +1,34 @@
 defmodule RoomlyWeb.Room.Video.VideoTile do
   use RoomlyWeb, :html
 
-  attr :user, :map, required: true
-  attr :my_id, :string, required: true
-  attr :speaking_id, :string, default: nil
+  @doc """
+  Renders a single participant video tile in the room grid.
+
+  Features:
+  - Displays participant avatar until video stream is ready
+  - Supports local (my video) and remote participant rendering
+  - Shows connecting state for remote participants
+  - Highlights speaking state via `data-speaking`
+  - Displays mute indicator when user is muted
+
+  ## Assigns
+
+    * `:user` - User struct containing at least `id`, `username`, `profile_image`, and `muted`
+    * `:my_id` - Current user ID (used to differentiate local video tile)
+    * `:speaking_id` - ID of the user currently speaking (optional)
+
+  """
+  attr :user, :map,
+    required: true,
+    doc: "User struct (expects id, username, profile_image, muted)"
+
+  attr :my_id, :string,
+    required: true,
+    doc: "Current user ID used to identify local video tile"
+
+  attr :speaking_id, :string,
+    default: nil,
+    doc: "ID of currently speaking user (used for UI highlight state)"
 
   def video_tile(assigns) do
     ~H"""

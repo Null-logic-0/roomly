@@ -1,6 +1,36 @@
 defmodule RoomlyWeb.ProfileUpload do
   use RoomlyWeb, :html
 
+  @doc """
+  Renders a profile image upload form using LiveView uploads.
+
+  Features:
+  - Drag & drop upload area
+  - File picker input
+  - Upload progress tracking
+  - Preview of selected images
+  - Validation error display
+  - Ability to cancel individual uploads
+
+  The form submits an `"upload"` event and validates on `"validate_profile_image"`.
+
+  ## Requirements
+
+  - `@uploads.profile_image` must be configured via `allow_upload/3` in the LiveView
+  - The LiveView must handle:
+    - `"upload"` event for consuming uploaded entries
+    - `"validate_profile_image"` for live validation
+    - `"cancel"` event for removing entries
+
+  ## Assigns
+
+    * `:form` - A Phoenix form struct (used for submission context)
+    * `:uploads` - Uploads configuration map containing `:profile_image`
+
+  """
+  attr :form, :any, required: true, doc: "Phoenix form struct used for submission"
+  attr :uploads, :map, required: true, doc: "Uploads map containing :profile_image configuration"
+
   def profile_upload(assigns) do
     ~H"""
     <.form for={@form} phx-submit="upload" phx-change="validate_profile_image">

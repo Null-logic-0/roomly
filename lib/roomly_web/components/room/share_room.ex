@@ -1,6 +1,27 @@
 defmodule RoomlyWeb.Room.ShareRoom do
   use RoomlyWeb, :html
 
+  @doc """
+  Renders a share button with a dropdown containing the room URL.
+
+  Features:
+  - Displays a share icon button
+  - Opens a dropdown with the full room URL
+  - Allows users to copy the URL to clipboard
+  - Provides visual feedback (icon change) after copying
+
+  The component uses a colocated LiveView hook (`.copy_url`) to handle
+  clipboard interaction on the client side.
+
+  ## Assigns
+
+    * `:room` - The room struct containing at least a `:slug` field
+
+  """
+  attr :room, :map,
+    required: true,
+    doc: "Room struct containing the slug used to build the share URL"
+
   def share_room(assigns) do
     ~H"""
     <div class="dropdown dropdown-top dropdown-end max-md:dropdown-center">

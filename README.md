@@ -2,6 +2,8 @@
 
 [![Elixir](https://img.shields.io/badge/Elixir-1.15-%236C2BD9?style=flat&logo=elixir&logoColor=white)](https://elixir-lang.org/) [![Phoenix](https://img.shields.io/badge/Phoenix-1.8.5-%23F97316?style=flat&logo=phoenix-framework&logoColor=white)](https://www.phoenixframework.org/) [![LiveView](https://img.shields.io/badge/LiveView-1.1.0-%236C2BD9?style=flat&logo=phoenix-framework&logoColor=white)](https://hexdocs.pm/phoenix_live_view/) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-%23336791?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 
+[![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/roomly)
+
 Roomly is a lightweight, real-time video meeting app built with Phoenix LiveView and WebRTC.
 It focuses on simplicity—no installs, no friction, just instant rooms you can join and start talking.
 
@@ -144,13 +146,26 @@ This allows access from other devices on the same network.
 - HTTPS support included for WebRTC compatibility
 
 ---
+# 📄 **Documentation**
 
-# 📄 **License**
+Generate the docs locally:
+
+```bash
+    mix docs
+```
+Then open `doc/index.html` in your browser.
+
+```bash 
+    open doc/index.html
+```
+
+---
+# © **License**
 
 Roomly is open-source software licensed under the **MIT License**.
 
 Feel free to use it for personal or commercial projects. See the 
-<a href="/LICENSE">
+<a href="LICENSE">
   **LICENSE**
 </a>
 

@@ -11,7 +11,18 @@ defmodule Roomly.MixProject do
       aliases: aliases(),
       deps: deps(),
       compilers: [:phoenix_live_view] ++ Mix.compilers(),
-      listeners: [Phoenix.CodeReloader]
+      listeners: [Phoenix.CodeReloader],
+      name: "ROOMLY",
+      source_url: "https://github.com/Null-logic-0/roomly",
+      homepage_url: "http://localhost:4000",
+      docs: &docs/0
+    ]
+  end
+
+  defp docs do
+    [
+      main: "readme",
+      extras: ["README.md"]
     ]
   end
 
@@ -70,7 +81,8 @@ defmodule Roomly.MixProject do
       {:ex_webrtc, "~> 0.16.0"},
       {:ex_sctp, "~> 0.1.0"},
       {:plug_cowboy, "~> 2.5"},
-      {:dotenvy, "~> 0.8.0"}
+      {:dotenvy, "~> 0.8.0"},
+      {:ex_doc, "~> 0.40.1", only: :dev, runtime: false, warn_if_outdated: true}
     ]
   end
 

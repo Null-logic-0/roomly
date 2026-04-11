@@ -1,8 +1,25 @@
 defmodule RoomlyWeb.Room.AppHeader do
   use RoomlyWeb, :html
 
-  attr :room, :any, required: true
-  attr :seconds, :any, required: true
+  @doc """
+  Renders the header for a room session.
+
+  Displays:
+  - The room owner's name (uppercase) with "'S ROOM"
+  - A live duration timer formatted as `HH:MM:SS`
+  - A video indicator icon
+
+  ## Assigns
+
+    * `:room` - The room struct containing a nested `user` with `:username`
+    * `:seconds` - Elapsed time in seconds (integer), displayed as formatted duration
+
+  """
+  attr :room, :map,
+    required: true,
+    doc: "Room struct with associated user (expects room.user.username)"
+
+  attr :seconds, :integer, required: true, doc: "Elapsed time in seconds for the session"
 
   def app_header(assigns) do
     ~H"""

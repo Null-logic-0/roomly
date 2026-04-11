@@ -4,9 +4,27 @@ defmodule RoomlyWeb.Room.Chat.ChatPopover do
   import RoomlyWeb.Room.Chat.ChatForm
   import RoomlyWeb.Room.Chat.Messages
 
-  attr :messages, :any, required: true
-  attr :messages_count, :integer, required: true
-  attr :message_form, :any, required: true
+  @doc """
+  Renders a chat popover panel for a room.
+
+  Features:
+  - Toggle button to open/close the chat panel
+  - Displays a list of messages
+  - Includes a chat input form for sending new messages
+  - Positioned as a floating popover above the footer
+
+  The panel visibility is controlled via `JS.toggle/1`.
+
+  ## Assigns
+
+    * `:messages` - List of chat messages
+    * `:messages_count` - Total number of messages
+    * `:message_form` - Phoenix form for sending messages
+
+  """
+  attr :messages, :list, required: true, doc: "List of chat messages"
+  attr :messages_count, :integer, required: true, doc: "Total number of messages"
+  attr :message_form, :any, required: true, doc: "Phoenix form for chat input"
 
   def chat_popover(assigns) do
     ~H"""

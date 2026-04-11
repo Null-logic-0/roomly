@@ -4,13 +4,40 @@ defmodule RoomlyWeb.Room.AppFooter do
   import RoomlyWeb.Room.Chat.ChatPopover
   import RoomlyWeb.Room.ShareRoom
 
-  attr :presences, :any, required: true
-  attr :messages, :any, required: true
-  attr :messages_count, :integer, required: true
-  attr :message_form, :any, required: true
-  attr :room, :any, required: true
-  attr :muted, :any, required: true
-  attr :camera_off, :any, required: true
+  @doc """
+  Renders the footer controls for a room session.
+
+  Features:
+  - Displays the room slug
+  - Media controls (mute/unmute, camera on/off, end call)
+  - Chat popover with message count
+  - Participants list dropdown
+  - Share room dropdown
+
+  ## Assigns
+
+    * `:room` - Room struct containing at least a `:slug`
+    * `:presences` - Presence map of active participants
+    * `:messages` - List of chat messages
+    * `:messages_count` - Total number of messages
+    * `:message_form` - Phoenix form for sending messages
+    * `:muted` - Boolean indicating if microphone is muted
+    * `:camera_off` - Boolean indicating if camera is disabled
+
+  ## Events
+
+  - `"toggle_mute"` - Toggles microphone state
+  - `"toggle_camera"` - Toggles camera state
+  - `"end_call"` - Ends the current call/session
+
+  """
+  attr :room, :map, required: true, doc: "Room struct (expects :slug)"
+  attr :presences, :map, required: true, doc: "Presence map of active participants"
+  attr :messages, :list, required: true, doc: "List of chat messages"
+  attr :messages_count, :integer, required: true, doc: "Total number of messages"
+  attr :message_form, :any, required: true, doc: "Phoenix form for chat input"
+  attr :muted, :boolean, required: true, doc: "Whether the microphone is muted"
+  attr :camera_off, :boolean, required: true, doc: "Whether the camera is turned off"
 
   def app_footer(assigns) do
     ~H"""

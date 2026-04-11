@@ -1,7 +1,14 @@
 defmodule RoomlyWeb.HomeLive do
+  @moduledoc """
+  Home page LiveView for Roomly.
+
+  This is the entry point of the application where users can:
+  - Create a new room
+  - Navigate into an active video room
+  """
   use RoomlyWeb, :live_view
-  import RoomlyWeb.HeroSection
   alias Roomly.Rooms
+  import RoomlyWeb.HeroSection
 
   on_mount {RoomlyWeb.UserAuth, :mount_current_scope}
 
@@ -13,12 +20,19 @@ defmodule RoomlyWeb.HomeLive do
     """
   end
 
+  @doc """
+  Initializes the home page.
+
+  Currently no state is required; relies on authenticated scope.
+  """
   def mount(_params, _session, socket) do
     {:ok, socket}
   end
 
+  @doc """
+  Creates a new room for the current user and redirects into it.
+  """
   def handle_event("create_room", _, socket) do
-    # your user scope
     current_user = socket.assigns[:current_scope]
 
     {:ok, room} =

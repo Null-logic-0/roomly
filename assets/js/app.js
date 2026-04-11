@@ -24,7 +24,7 @@ import { Socket } from "phoenix"
 import { LiveSocket } from "phoenix_live_view"
 import { hooks as colocatedHooks } from "phoenix-colocated/roomly"
 import topbar from "../vendor/topbar"
-import WebRTC from "./webrtc"
+import WebRTC from "./webrtc/index.js"
 
 
 

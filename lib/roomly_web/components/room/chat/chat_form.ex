@@ -1,6 +1,33 @@
 defmodule RoomlyWeb.Room.Chat.ChatForm do
   use RoomlyWeb, :html
 
+  @doc """
+  Renders a chat input form for sending messages in a room.
+
+  Features:
+  - Textarea input for composing messages
+  - Submit button with send icon
+  - Press **Enter** to send message
+  - Use **Shift + Enter** for a new line
+  - Automatically clears input after sending
+  - Refocuses input on `"clear_input"` event
+
+  Uses a colocated LiveView hook (`.message_input`) to handle:
+  - Keyboard shortcuts (Enter to send)
+  - Client-side input clearing and focus management
+
+  ## Assigns
+
+    * `:form` - Phoenix form struct used for message submission
+
+  ## Events
+
+  - `"send_message"` - Triggered on form submit or Enter key press
+  - `"clear_input"` - Clears and refocuses the textarea (handled via JS hook)
+
+  """
+  attr :form, :any, required: true, doc: "Phoenix form struct for chat message input"
+
   def chat_form(assigns) do
     ~H"""
     <.form

@@ -32,19 +32,6 @@ defmodule Roomly.Rooms do
   end
 
   @doc """
-  Returns the list of rooms.
-
-  ## Examples
-
-      iex> list_rooms(scope)
-      [%Room{}, ...]
-
-  """
-  def list_rooms(%Scope{} = scope) do
-    Repo.all_by(Room, user_id: scope.user.id)
-  end
-
-  @doc """
   Gets a single room.
 
   Raises `Ecto.NoResultsError` if the Room does not exist.
@@ -69,10 +56,10 @@ defmodule Roomly.Rooms do
 
   ## Examples
 
-      iex> get_room_by_slug!(scope, "slug")
+      iex> get_room_by_slug!("slug")
       %Room{}
 
-      iex> get_room_by_slug!(scope, "invalid-slug")
+      iex> get_room_by_slug!("invalid-slug")
       ** (Ecto.NoResultsError)
 
   """
@@ -106,52 +93,6 @@ defmodule Roomly.Rooms do
   end
 
   @doc """
-  Updates a room.
-
-  ## Examples
-
-      iex> update_room(scope, room, %{field: new_value})
-      {:ok, %Room{}}
-
-      iex> update_room(scope, room, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def update_room(%Scope{} = scope, %Room{} = room, attrs) do
-    true = room.user_id == scope.user.id
-
-    with {:ok, room = %Room{}} <-
-           room
-           |> Room.changeset(attrs, scope)
-           |> Repo.update() do
-      broadcast_room(scope, {:updated, room})
-      {:ok, room}
-    end
-  end
-
-  @doc """
-  Deletes a room.
-
-  ## Examples
-
-      iex> delete_room(scope, room)
-      {:ok, %Room{}}
-
-      iex> delete_room(scope, room)
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def delete_room(%Scope{} = scope, %Room{} = room) do
-    true = room.user_id == scope.user.id
-
-    with {:ok, room = %Room{}} <-
-           Repo.delete(room) do
-      broadcast_room(scope, {:deleted, room})
-      {:ok, room}
-    end
-  end
-
-  @doc """
   Returns an `%Ecto.Changeset{}` for tracking room changes.
 
   ## Examples
@@ -164,145 +105,6 @@ defmodule Roomly.Rooms do
     true = room.user_id == scope.user.id
 
     Room.changeset(room, attrs, scope)
-  end
-
-  alias Roomly.Rooms.Participant
-  alias Roomly.Accounts.Scope
-
-  @doc """
-  Subscribes to scoped notifications about any participant changes.
-
-  The broadcasted messages match the pattern:
-
-    * {:created, %Participant{}}
-    * {:updated, %Participant{}}
-    * {:deleted, %Participant{}}
-
-  """
-  def subscribe_participants(%Scope{} = scope) do
-    key = scope.user.id
-
-    Phoenix.PubSub.subscribe(Roomly.PubSub, "user:#{key}:participants")
-  end
-
-  defp broadcast_participant(%Scope{} = scope, message) do
-    key = scope.user.id
-
-    Phoenix.PubSub.broadcast(Roomly.PubSub, "user:#{key}:participants", message)
-  end
-
-  @doc """
-  Returns the list of participants.
-
-  ## Examples
-
-      iex> list_participants(scope)
-      [%Participant{}, ...]
-
-  """
-  def list_participants(%Scope{} = scope) do
-    Repo.all_by(Participant, user_id: scope.user.id)
-  end
-
-  @doc """
-  Gets a single participant.
-
-  Raises `Ecto.NoResultsError` if the Participant does not exist.
-
-  ## Examples
-
-      iex> get_participant!(scope, 123)
-      %Participant{}
-
-      iex> get_participant!(scope, 456)
-      ** (Ecto.NoResultsError)
-
-  """
-  def get_participant!(%Scope{} = scope, id) do
-    Repo.get_by!(Participant, id: id, user_id: scope.user.id)
-  end
-
-  @doc """
-  Creates a participant.
-
-  ## Examples
-
-      iex> create_participant(scope, %{field: value})
-      {:ok, %Participant{}}
-
-      iex> create_participant(scope, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def create_participant(%Scope{} = scope, attrs) do
-    with {:ok, participant = %Participant{}} <-
-           %Participant{}
-           |> Participant.changeset(attrs, scope)
-           |> Repo.insert() do
-      broadcast_participant(scope, {:created, participant})
-      {:ok, participant}
-    end
-  end
-
-  @doc """
-  Updates a participant.
-
-  ## Examples
-
-      iex> update_participant(scope, participant, %{field: new_value})
-      {:ok, %Participant{}}
-
-      iex> update_participant(scope, participant, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def update_participant(%Scope{} = scope, %Participant{} = participant, attrs) do
-    true = participant.user_id == scope.user.id
-
-    with {:ok, participant = %Participant{}} <-
-           participant
-           |> Participant.changeset(attrs, scope)
-           |> Repo.update() do
-      broadcast_participant(scope, {:updated, participant})
-      {:ok, participant}
-    end
-  end
-
-  @doc """
-  Deletes a participant.
-
-  ## Examples
-
-      iex> delete_participant(scope, participant)
-      {:ok, %Participant{}}
-
-      iex> delete_participant(scope, participant)
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def delete_participant(%Scope{} = scope, %Participant{} = participant) do
-    true = participant.user_id == scope.user.id
-
-    with {:ok, participant = %Participant{}} <-
-           Repo.delete(participant) do
-      broadcast_participant(scope, {:deleted, participant})
-      {:ok, participant}
-    end
-  end
-
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking participant changes.
-
-  ## Examples
-
-      iex> change_participant(scope, participant)
-      %Ecto.Changeset{data: %Participant{}}
-
-  """
-  def change_participant(%Scope{} = scope, %Participant{} = participant, attrs \\ %{}) do
-    true = participant.user_id == scope.user.id
-
-    Participant.changeset(participant, attrs, scope)
   end
 
   alias Roomly.Rooms.Message
@@ -383,52 +185,6 @@ defmodule Roomly.Rooms do
            |> Repo.insert() do
       message = Repo.preload(message, :user)
       broadcast_message(slug, message)
-      {:ok, message}
-    end
-  end
-
-  @doc """
-  Updates a message.
-
-  ## Examples
-
-      iex> update_message(scope, message, %{field: new_value})
-      {:ok, %Message{}}
-
-      iex> update_message(scope, message, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def update_message(%Scope{} = scope, %Message{} = message, attrs) do
-    true = message.user_id == scope.user.id
-
-    with {:ok, message = %Message{}} <-
-           message
-           |> Message.changeset(attrs, scope)
-           |> Repo.update() do
-      broadcast_message(attrs["room_slug"] || attrs[:room_slug], {:created, message})
-      {:ok, message}
-    end
-  end
-
-  @doc """
-  Deletes a message.
-
-  ## Examples
-
-      iex> delete_message(scope, message)
-      {:ok, %Message{}}
-
-      iex> delete_message(scope, message)
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def delete_message(%Scope{} = scope, %Message{} = message) do
-    true = message.user_id == scope.user.id
-
-    with {:ok, message = %Message{}} <-
-           Repo.delete(message) do
-      broadcast_message(scope, {:deleted, message})
       {:ok, message}
     end
   end

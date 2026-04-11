@@ -3,7 +3,7 @@ defmodule Roomly.Rooms.Message do
   import Ecto.Changeset
 
   schema "messages" do
-    field :context, :string
+    field :content, :string
     belongs_to :room, Roomly.Rooms.Room
     belongs_to :user, Roomly.Accounts.User
 
@@ -13,8 +13,8 @@ defmodule Roomly.Rooms.Message do
   @doc false
   def changeset(message, attrs, user_scope) do
     message
-    |> cast(attrs, [:context])
-    |> validate_required([:context])
+    |> cast(attrs, [:content])
+    |> validate_required([:content])
     |> put_assoc(:user, user_scope.user)
   end
 end

@@ -2,10 +2,30 @@ defmodule RoomlyWeb.Room.Chat.Messages do
   use RoomlyWeb, :html
 
   @doc """
-  Messages list
+  Renders a scrollable list of chat messages.
+
+  Features:
+  - Displays messages with username and relative timestamp
+  - Empty state when no messages are present
+  - Auto-scrolls to the latest message on update
+  - Uses `phx-update="stream"` for efficient LiveView updates
+
+  The component includes a colocated hook (`.scroll_to_bottom`) that ensures
+  the chat always scrolls to the newest message when mounted or updated.
+
+  ## Assigns
+
+    * `:messages` - Stream or list of `{dom_id, message}` tuples
+    * `:messages_count` - Total number of messages (used for empty state)
+
   """
-  attr :messages, :any, required: true
-  attr :messages_count, :integer, required: true
+  attr :messages, :list,
+    required: true,
+    doc: "List or stream of {dom_id, message} tuples (message must include user and timestamps)"
+
+  attr :messages_count, :integer,
+    required: true,
+    doc: "Total number of messages for empty state handling"
 
   def messages(assigns) do
     ~H"""
@@ -35,7 +55,7 @@ defmodule RoomlyWeb.Room.Chat.Messages do
                 {time_ago(message.inserted_at)}
               </time>
             </div>
-            <div class="chat-bubble">{message.context}</div>
+            <div class="chat-bubble">{message.content}</div>
           </div>
         </div>
       </div>

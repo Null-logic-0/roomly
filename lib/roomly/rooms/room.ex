@@ -6,13 +6,11 @@ defmodule Roomly.Rooms.Room do
     field :slug, :string
 
     belongs_to :user, Roomly.Accounts.User
-    has_many :participants, Roomly.Rooms.Participant
     has_many :messages, Roomly.Rooms.Message
 
     timestamps(type: :utc_datetime)
   end
 
-  @doc false
   def changeset(room, attrs, user_scope) do
     room
     |> cast(attrs, [])

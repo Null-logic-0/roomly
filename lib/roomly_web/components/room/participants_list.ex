@@ -2,9 +2,23 @@ defmodule RoomlyWeb.Room.ParticipantsList do
   use RoomlyWeb, :html
 
   @doc """
-   Participants presence list
+  Renders a dropdown list of active participants in a room.
+
+  Displays:
+  - A button with a user group icon
+  - A dropdown containing the list of participants
+  - Each participant’s profile image and username
+
+  The component expects presence data (e.g. from `Phoenix.Presence`)
+  where each entry contains user metadata.
+
+  ## Assigns
+
+    * `:presences` - A map of presence data in the format:
+      `%{user_id => %{username: String.t(), profile_image: String.t()}}`
+
   """
-  attr :presences, :any, required: true
+  attr :presences, :map, required: true, doc: "Presence map keyed by user_id with user metadata"
 
   def participants_list(assigns) do
     ~H"""
